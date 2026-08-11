@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
             'name'       => 'Administrator Utama',
             'username'   => 'admin',
             'email'      => 'admin.absensi.sppg@gmail.com',
-            'password'   => Hash::make('SPPG2026!'),
+            'password'   => Hash::make('adminSPPG!'),
             'role'       => 'admin',
             'phone'      => '081393328852',
             'alamat'     => 'Kantor SPPG Langensari',
