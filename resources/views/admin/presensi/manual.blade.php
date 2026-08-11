@@ -58,10 +58,11 @@
                         <thead>
                             <tr class="bg-[#0D3B66] text-white text-xs uppercase tracking-wider font-bold">
                                 <th class="px-6 py-4">Nama Pegawai</th>
-                                <th class="px-3 py-4 text-center" title="Hadir">H <br><span class="text-[10px] font-normal text-blue-200">Hadir</span></th>
-                                <th class="px-3 py-4 text-center" title="Izin / Cuti">I <br><span class="text-[10px] font-normal text-blue-200">Izin</span></th>
-                                <th class="px-3 py-4 text-center" title="Sakit">S <br><span class="text-[10px] font-normal text-blue-200">Sakit</span></th>
-                                <th class="px-3 py-4 text-center" title="Alpa">A <br><span class="text-[10px] font-normal text-blue-200">Alpa</span></th>
+                                <th class="px-3 py-4 text-center">Hadir</th>
+                                <th class="px-3 py-4 text-center">Izin</th>
+                                <th class="px-3 py-4 text-center">Sakit</th>
+                                <th class="px-3 py-4 text-center">Alpa</th>
+                                <th class="px-6 py-4">Jam (Masuk / Pulang)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -71,25 +72,34 @@
                                         <p class="font-bold text-gray-900">{{ $p->name }}</p>
                                         <p class="text-xs text-gray-500 mt-0.5">{{ $p->id_pegawai }}</p>
                                     </td>
-
-                                    <!-- Radio: Hadir (H) - Warna Hijau -->
-                                    <td class="px-3 py-4 text-center bg-green-50/30 border-l border-gray-100">
-                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Hadir" class="w-5 h-5 text-green-600 border-gray-300 focus:ring-green-500 cursor-pointer">
+                                    
+                                    <!-- Radio Status -->
+                                    <td class="px-3 py-4 text-center border-l border-gray-100">
+                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Hadir" data-id="{{ $p->id }}" class="radio-status w-5 h-5 text-green-600 cursor-pointer">
+                                    </td>
+                                    <td class="px-3 py-4 text-center">
+                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Izin" data-id="{{ $p->id }}" class="radio-status w-5 h-5 text-blue-600 cursor-pointer">
+                                    </td>
+                                    <td class="px-3 py-4 text-center">
+                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Sakit" data-id="{{ $p->id }}" class="radio-status w-5 h-5 text-orange-500 cursor-pointer">
+                                    </td>
+                                    <td class="px-3 py-4 text-center">
+                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Alpa" data-id="{{ $p->id }}" class="radio-status w-5 h-5 text-red-600 cursor-pointer">
                                     </td>
 
-                                    <!-- Radio: Izin (I) - Warna Biru -->
-                                    <td class="px-3 py-4 text-center bg-blue-50/30">
-                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Izin" class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer">
-                                    </td>
-
-                                    <!-- Radio: Sakit (S) - Warna Kuning/Orange -->
-                                    <td class="px-3 py-4 text-center bg-orange-50/30">
-                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Sakit" class="w-5 h-5 text-orange-500 border-gray-300 focus:ring-orange-500 cursor-pointer">
-                                    </td>
-
-                                    <!-- Radio: Alpa (A) - Warna Merah -->
-                                    <td class="px-3 py-4 text-center bg-red-50/30">
-                                        <input type="radio" name="presensi[{{ $p->id }}]" value="Alpa" class="w-5 h-5 text-red-600 border-gray-300 focus:ring-red-500 cursor-pointer">
+                                    <!-- Kolom Input Waktu (Hidden Default) -->
+                                    <td class="px-6 py-4">
+                                        <div id="waktu-input-{{ $p->id }}" class="hidden flex-col gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs text-gray-500 w-12 font-medium">Masuk</span>
+                                                <input type="time" name="jam_masuk[{{ $p->id }}]" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:border-blue-500">
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs text-gray-500 w-12 font-medium">Pulang</span>
+                                                <input type="time" name="jam_keluar[{{ $p->id }}]" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:border-blue-500">
+                                            </div>
+                                        </div>
+                                        <span id="waktu-placeholder-{{ $p->id }}" class="text-xs text-gray-400 italic">Pilih 'Hadir' untuk isi jam</span>
                                     </td>
                                 </tr>
                             @endforeach
@@ -100,12 +110,37 @@
 
             <!-- Tombol Simpan -->
             <div class="flex justify-end sticky bottom-6 z-10">
-                <button type="submit" class="bg-[#1868D5] hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(24,104,213,0.5)] transition-all hover:-translate-y-1 flex items-center gap-2">
+                <button type="submit" class="bg-[#1868D5] hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(24,104,213,0.5)] transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                    Simpan Presensi Massal
+                    Simpan Presensi Manual
                 </button>
             </div>
         </form>
     </main>
+
+    <!-- Script Logika Menampilkan Jam -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const radios = document.querySelectorAll('.radio-status');
+            
+            radios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const userId = this.getAttribute('data-id');
+                    const waktuInput = document.getElementById('waktu-input-' + userId);
+                    const placeholder = document.getElementById('waktu-placeholder-' + userId);
+                    
+                    if (this.value === 'Hadir') {
+                        waktuInput.classList.remove('hidden');
+                        waktuInput.classList.add('flex');
+                        placeholder.classList.add('hidden');
+                    } else {
+                        waktuInput.classList.add('hidden');
+                        waktuInput.classList.remove('flex');
+                        placeholder.classList.remove('hidden');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

@@ -192,18 +192,33 @@
                 </div>
             </li>
 
-            <a href="{{ route('admin.presensi.manual') }}" class="{{ request()->routeIs('admin.presensi.manual') ? 'text-[#1868D5] font-bold' : 'text-gray-500 hover:text-[#1868D5] font-medium' }} flex items-center gap-2 transition-colors">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-    Absen Manual
-</a>
+            <!-- Dropdown Portal Presensi -->
+<li class="relative group">
+    <!-- Tombol Utama di Navbar -->
+    <button class="flex items-center gap-2 text-gray-500 hover:text-indigo-600 py-4 px-2 border-b-2 border-transparent transition-all duration-300 hover:border-indigo-300 whitespace-nowrap cursor-pointer">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        Portal Presensi
+        <!-- Ikon Panah Bawah -->
+        <svg class="w-4 h-4 opacity-70 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    </button>
 
-            <!-- Presensi -->
-            <li>
-                <a href="{{ route('presensi.tap') }}" target="_blank" class="flex items-center gap-2 text-gray-500 hover:text-indigo-600 py-4 px-2 border-b-2 border-transparent transition-all duration-300 hover:border-indigo-300 whitespace-nowrap">
-                    <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    Presensi
-                </a>
-            </li>
+    <!-- Kotak Isi Dropdown (Muncul saat mouse diarahkan ke tombol) -->
+    <div class="absolute left-0 top-[100%] mt-0 w-52 bg-white border border-gray-100 rounded-lg shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 flex flex-col py-2">
+        
+        <!-- Link 1: Mesin Presensi QR -->
+        <a href="{{ route('presensi.tap') }}" target="_blank" class="px-4 py-2.5 text-sm text-gray-600 hover:text-[#1868D5] hover:bg-blue-50/50 flex items-center gap-3 transition-colors">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+            Scan QR
+        </a>
+
+        <!-- Link 2: Absen Manual -->
+        <a href="{{ route('admin.presensi.manual') }}" class="{{ request()->routeIs('admin.presensi.manual') ? 'text-[#1868D5] bg-blue-50/50 font-bold' : 'text-gray-600 hover:text-[#1868D5] hover:bg-blue-50/50 font-medium' }} px-4 py-2.5 text-sm flex items-center gap-3 transition-colors">
+            <svg class="w-4 h-4 {{ request()->routeIs('admin.presensi.manual') ? 'text-[#1868D5]' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            Absen Manual
+        </a>
+        
+    </div>
+</li>
 
             <!-- Ketidakhadiran -->
             <li>
@@ -354,17 +369,40 @@
                 @csrf
                 @method('PUT')
                 <div class="mb-5">
-                    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Password Lama</label>
-                    <input type="password" name="current_password" required placeholder="Masukkan password saat ini" class="w-full border border-gray-300 p-3 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
-                </div>
-                <div class="mb-5">
-                    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Password Baru</label>
-                    <input type="password" name="new_password" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 p-3 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
-                </div>
-                <div class="mb-8">
-                    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Konfirmasi Password Baru</label>
-                    <input type="password" name="new_password_confirmation" required placeholder="Ketik ulang password baru" class="w-full border border-gray-300 p-3 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
-                </div>
+    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Password Lama</label>
+    <div class="relative">
+        <input type="password" id="current_password" name="current_password" required placeholder="Masukkan password saat ini" class="w-full border border-gray-300 p-3 pr-10 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
+        <button type="button" onclick="togglePasswordModal('current_password', 'icon-eye-current')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-amber-500 transition-colors">
+            <svg id="icon-eye-current" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="mb-5">
+    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Password Baru</label>
+    <div class="relative">
+        <input type="password" id="new_password" name="new_password" required placeholder="Minimal 6 karakter" class="w-full border border-gray-300 p-3 pr-10 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
+        <button type="button" onclick="togglePasswordModal('new_password', 'icon-eye-new')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-amber-500 transition-colors">
+            <svg id="icon-eye-new" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="mb-8">
+    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Konfirmasi Password Baru</label>
+    <div class="relative">
+        <input type="password" id="new_password_confirmation" name="new_password_confirmation" required placeholder="Ketik ulang password baru" class="w-full border border-gray-300 p-3 pr-10 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition shadow-sm">
+        <button type="button" onclick="togglePasswordModal('new_password_confirmation', 'icon-eye-confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-amber-500 transition-colors">
+            <svg id="icon-eye-confirm" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+            </svg>
+        </button>
+    </div>
+</div>
                 <div class="flex gap-3 justify-end pt-2">
                     <button type="button" onclick="togglePasswordModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-colors">Batal</button>
                     <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold py-3 rounded-xl transition-colors shadow-md">Simpan Password</button>
@@ -522,7 +560,7 @@
         }
     }
 
-    // SCRIPT MODAL PASSWORD
+    // 1. Script bawaan Anda untuk membuka/menutup modal password
     function togglePasswordModal() {
         const modal = document.getElementById('modalPassword');
         const modalBox = modal.querySelector('div');
@@ -534,6 +572,27 @@
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
         }
     }
+
+    // 2. Script baru untuk ikon mata (diubah namanya agar tidak bentrok)
+    function toggleEyeIcon(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            `;
+            icon.classList.add('text-amber-500'); 
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+            `;
+            icon.classList.remove('text-amber-500');
+        }
+}
 
     // SCRIPT MODAL PROFIL
     function toggleProfileModal() {

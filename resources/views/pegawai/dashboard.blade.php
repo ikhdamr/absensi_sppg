@@ -42,18 +42,29 @@
         $warnaTeks = 'text-red-500';
 
         if ($cekPresensi) {
-            if (is_null($cekPresensi->jam_keluar)) {
-                $statusAbsen = 'bekerja'; // Kuning
-                $teksStatus = 'Sedang Bekerja';
-                $warnaDot = 'bg-amber-500';
-                $warnaPing = 'bg-amber-400';
-                $warnaTeks = 'text-amber-500';
-            } else {
-                $statusAbsen = 'selesai'; // Hijau
-                $teksStatus = 'Pekerjaan Selesai';
-                $warnaDot = 'bg-green-500';
-                $warnaPing = 'hidden'; // Matikan efek kedip jika sudah selesai
-                $warnaTeks = 'text-green-600';
+            // CEK BARU: Apakah statusnya Izin/Sakit/Cuti/Alpa?
+            if (in_array(strtolower($cekPresensi->status), ['izin', 'sakit', 'cuti', 'alpa'])) {
+                $statusAbsen = strtolower($cekPresensi->status); // biru
+                $teksStatus = strtoupper($cekPresensi->status); // Akan otomatis menulis CUTI, IZIN, dll
+                $warnaDot = 'bg-blue-500';
+                $warnaPing = 'hidden'; // Matikan efek kedip
+                $warnaTeks = 'text-blue-600';
+            } 
+            // JIKA STATUSNYA HADIR / TERLAMBAT (Jalankan logika bawaan Anda)
+            else {
+                if (is_null($cekPresensi->jam_keluar)) {
+                    $statusAbsen = 'bekerja'; // Kuning
+                    $teksStatus = 'Sedang Bekerja';
+                    $warnaDot = 'bg-amber-500';
+                    $warnaPing = 'bg-amber-400';
+                    $warnaTeks = 'text-amber-500';
+                } else {
+                    $statusAbsen = 'selesai'; // Hijau
+                    $teksStatus = 'Pekerjaan Selesai';
+                    $warnaDot = 'bg-green-500';
+                    $warnaPing = 'hidden'; // Matikan efek kedip jika sudah selesai
+                    $warnaTeks = 'text-green-600';
+                }
             }
         }
     @endphp

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon; // Wajib ditambahkan untuk memanipulasi waktu
+use Carbon\Carbon; 
 
 class PresensiController extends Controller
 {
@@ -75,7 +75,6 @@ class PresensiController extends Controller
         $jamSekarang = $sekarang->format('H:i:s');
 
         // Pengecekan: Apakah belum masuk rentang waktu absen masuk?
-        // Asumsi: Pegawai baru boleh absen paling cepat 1 jam sebelum jam_masuk shift-nya.
         $waktuBukaAbsen = Carbon::parse($tanggalHariIni . ' ' . $jamKerja->jam_masuk)->subHour()->format('H:i:s');
 
         if ($jamSekarang < $waktuBukaAbsen) {
@@ -114,6 +113,14 @@ class PresensiController extends Controller
             }
         } else {
             // JIKA BELUM ABSEN -> MAKA INI ADALAH ABSEN MASUK
+
+            // ==========================================================
+            // PENAMBAHAN BARU: CEGAH ABSEN MASUK JIKA SHIFT SUDAH LEWAT
+            // ==========================================================
+            if ($jamSekarang > $jamKerja->jam_keluar) {
+                return redirect()->route('pegawai.dashboard')->with('error', 'Gagal Absen! Waktu shift Anda sudah berakhir pada pukul ' . \Carbon\Carbon::parse($jamKerja->jam_keluar)->format('H:i') . ' WIB.');
+            }
+
             $statusPresensi = 'Hadir';
             $pesanNotif = 'Presensi MASUK berhasil dicatat! Anda Tepat Waktu.';
             $tipeNotif = 'success';
@@ -175,19 +182,14 @@ class PresensiController extends Controller
      */
     public function harian(Request $request)
     {
-        // 1. Ambil input tanggal dari filter, jika kosong gunakan tanggal hari ini
         $filterDate = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
-
-        // 2. Buat format tanggal bahasa Indonesia
         $tanggalFormat = Carbon::parse($filterDate)->translatedFormat('d F Y');
-
-        // 3. Ambil data presensi (KITA UBAH NAMANYA MENJADI $rekap)
+        
         $rekap = \App\Models\Presensi::with('user')
                         ->where('tanggal', $filterDate)
                         ->orderBy('jam_masuk', 'asc')
                         ->get();
 
-        // 4. Kirim $rekap ke tampilan blade
         return view('admin.rekap.harian', compact('rekap', 'filterDate', 'tanggalFormat'));
     }
 
@@ -196,24 +198,15 @@ class PresensiController extends Controller
      */
     public function exportPdfHarian(Request $request)
     {
-        // 1. Ambil input tanggal dari URL (jika ada), default hari ini
         $filterDate = $request->input('tanggal', Carbon::today()->format('Y-m-d'));
-
-        // 2. Format tanggal untuk ditampilkan di Kop Surat PDF
         $tanggalFormat = Carbon::parse($filterDate)->translatedFormat('d F Y');
 
-        // 3. Ambil data presensi dari database
-        // (KITA GUNAKAN VARIABEL $presensi AGAR COCOK DENGAN BLADE PDF ANDA)
         $presensi = \App\Models\Presensi::with('user')
                         ->where('tanggal', $filterDate)
                         ->orderBy('jam_masuk', 'asc')
                         ->get();
 
-        // 4. Generate PDF
-        // Pastikan nama file view-nya adalah pdf_harian sesuai milik Anda
         $pdf = Pdf::loadView('admin.rekap.pdf_harian', compact('presensi', 'tanggalFormat', 'filterDate'));
-
-        // 5. Download otomatis file PDF-nya
         return $pdf->download('Laporan-Presensi-' . $filterDate . '.pdf');
     }
 
@@ -222,36 +215,29 @@ class PresensiController extends Controller
      */
     public function bulanan(Request $request)
     {
-        // 1. Ambil input bulan dan tahun dari filter
         $filterMonth = $request->input('bulan', \Carbon\Carbon::now()->format('m'));
         $filterYear = $request->input('tahun', \Carbon\Carbon::now()->format('Y'));
 
-        // 2. Buat duplikat variabel agar file Blade aman dari error (Bahasa Inggris & Indonesia)
         $month = $filterMonth;
         $tahun = $filterYear;
-        $year = $filterYear; // <--- INI TAMBAHANNYA
+        $year = $filterYear; 
 
-        // 3. Daftar bulan untuk dropdown filter di tampilan
         $daftarBulan = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
-        // Ambil nama bulan (misal: 'Agustus')
         $namaBulanTerpilih = $daftarBulan[(int)$filterMonth];
         $bulanFormat = $namaBulanTerpilih . ' ' . $filterYear;
 
-        // 4. Ambil data seluruh pegawai beserta hitungan rekapnya di bulan tersebut
         $rekap = \App\Models\User::where('role', 'pegawai')->get()->map(function ($user) use ($filterMonth, $filterYear) {
 
-            // Cari data presensi milik user ini pada bulan dan tahun yang dipilih
             $presensi = \App\Models\Presensi::where('user_id', $user->id)
                             ->whereMonth('tanggal', $filterMonth)
                             ->whereYear('tanggal', $filterYear)
                             ->get();
 
-            // Hitung statistik per pegawai
             $totalHadir = $presensi->whereIn('status', ['Hadir', 'hadir', 'Terlambat', 'terlambat'])->count();
 
             $totalTerlambat = $presensi->filter(function ($item) {
@@ -261,7 +247,6 @@ class PresensiController extends Controller
             $totalIzin = $presensi->whereIn('status', ['Izin', 'izin', 'Sakit', 'sakit', 'Cuti', 'cuti'])->count();
             $totalAlpa = $presensi->whereIn('status', ['Alpa', 'alpa'])->count();
 
-            // Sisipkan hasil hitungan ke dalam objek user
             $user->total_hadir = $totalHadir;
             $user->total_terlambat = $totalTerlambat;
             $user->total_izin = $totalIzin;
@@ -270,7 +255,6 @@ class PresensiController extends Controller
             return $user;
         });
 
-        // 5. Kirim semua variabel ke tampilan rekap bulanan (Tambahkan 'year' di sini)
         return view('admin.rekap.bulanan', compact(
             'rekap',
             'filterMonth',
@@ -289,11 +273,9 @@ class PresensiController extends Controller
      */
     public function exportPdfBulanan(Request $request)
     {
-        // 1. Ambil input bulan dan tahun
         $filterMonth = $request->input('bulan', \Carbon\Carbon::now()->format('m'));
         $filterYear = $request->input('tahun', \Carbon\Carbon::now()->format('Y'));
 
-        // 2. Format nama bulan untuk Kop Surat PDF
         $daftarBulan = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -302,7 +284,6 @@ class PresensiController extends Controller
         $namaBulanTerpilih = $daftarBulan[(int)$filterMonth];
         $bulanFormat = $namaBulanTerpilih . ' ' . $filterYear;
 
-        // 3. Ambil data rekap (sama persis dengan fungsi bulanan)
         $rekap = \App\Models\User::where('role', 'pegawai')->get()->map(function ($user) use ($filterMonth, $filterYear) {
 
             $presensi = \App\Models\Presensi::where('user_id', $user->id)
@@ -322,10 +303,7 @@ class PresensiController extends Controller
             return $user;
         });
 
-        // 4. Generate PDF (Memanggil file view pdf_bulanan)
         $pdf = Pdf::loadView('admin.rekap.pdf_bulanan', compact('rekap', 'bulanFormat'));
-
-        // 5. Download otomatis
         return $pdf->download('Rekap-Bulanan-' . $namaBulanTerpilih . '-' . $filterYear . '.pdf');
     }
 
@@ -334,19 +312,21 @@ class PresensiController extends Controller
     // ====================================
     public function createManual()
     {
-        // Ambil semua data pegawai untuk dimasukkan ke dropdown
-        $pegawai = \App\Models\User::where('role', 'pegawai')->orderBy('name', 'asc')->get();
+        $pegawai = \App\Models\User::where('role', '!=', 'admin')
+                           ->orderBy('name', 'asc')
+                           ->get();
+                           
         return view('admin.presensi.manual', compact('pegawai'));
     }
 
     // ====================================
-    // 11. MENYIMPAN DATA ABSEN MANUAL (MASSAL)
+    // 11. MENYIMPAN DATA ABSEN MANUAL
     // ====================================
     public function storeManual(Request $request)
     {
         $request->validate([
             'tanggal'  => 'required|date',
-            'presensi' => 'required|array', // Memastikan ada data yang dicentang
+            'presensi' => 'required|array', 
         ], [
             'presensi.required' => 'Anda belum mencentang status presensi satupun pegawai.'
         ]);
@@ -354,38 +334,57 @@ class PresensiController extends Controller
         $tanggal = $request->tanggal;
         $jumlahDisimpan = 0;
 
-        // Looping semua pegawai yang dicentang di tabel
         foreach ($request->presensi as $user_id => $status) {
 
-            // Cek apakah pegawai sudah absen di tanggal tersebut
             $presensi = \App\Models\Presensi::where('user_id', $user_id)
                                             ->where('tanggal', $tanggal)
                                             ->first();
 
-            // Set default jam jika statusnya Hadir (Bisa disesuaikan nanti)
-            $jamMasuk = ($status == 'Hadir') ? '08:00:00' : null;
-            $jamKeluar = ($status == 'Hadir') ? '16:00:00' : null;
+            if ($status == 'Hadir') {
+                // Ambil input jam dari form (Jika kosong, jadikan null)
+                $jamMasukInput = $request->jam_masuk[$user_id] ?? null;
+                $jamKeluarInput = $request->jam_keluar[$user_id] ?? null;
 
-            if ($presensi) {
-                // Jika sudah ada data, UPDATE statusnya
-                $presensi->update([
-                    'status' => $status,
-                ]);
+                if ($presensi) {
+                    // Update data yang sudah ada (jangan timpa dengan null jika form dikosongkan)
+                    $presensi->update([
+                        'status'     => 'Hadir',
+                        'jam_masuk'  => $jamMasukInput ?: $presensi->jam_masuk,
+                        'jam_keluar' => $jamKeluarInput ?: $presensi->jam_keluar,
+                    ]);
+                } else {
+                    // Buat data baru
+                    \App\Models\Presensi::create([
+                        'user_id'         => $user_id,
+                        'tanggal'         => $tanggal,
+                        'jam_masuk'       => $jamMasukInput,
+                        'jam_keluar'      => $jamKeluarInput,
+                        'status'          => 'Hadir',
+                        'menit_terlambat' => 0 
+                    ]);
+                }
             } else {
-                // Jika belum ada data, BUAT BARU
-                \App\Models\Presensi::create([
-                    'user_id'         => $user_id,
-                    'tanggal'         => $tanggal,
-                    'jam_masuk'       => $jamMasuk,
-                    'jam_keluar'      => $jamKeluar,
-                    'status'          => $status,
-                    'menit_terlambat' => 0
-                ]);
+                // Jika Izin / Sakit / Alpa (Hapus jam masuk dan keluarnya)
+                if ($presensi) {
+                    $presensi->update([
+                        'status'     => $status,
+                        'jam_masuk'  => null,
+                        'jam_keluar' => null
+                    ]);
+                } else {
+                    \App\Models\Presensi::create([
+                        'user_id'         => $user_id,
+                        'tanggal'         => $tanggal,
+                        'jam_masuk'       => null,
+                        'jam_keluar'      => null,
+                        'status'          => $status,
+                        'menit_terlambat' => 0
+                    ]);
+                }
             }
-
             $jumlahDisimpan++;
         }
 
-        return back()->with('success', 'Data presensi untuk ' . $jumlahDisimpan . ' pegawai di tanggal ' . \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') . ' berhasil disimpan!');
+        return back()->with('success', 'Data presensi berhasil disimpan!');
     }
 }

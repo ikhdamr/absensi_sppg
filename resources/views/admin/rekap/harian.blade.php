@@ -134,23 +134,29 @@
 
                             <!-- 6. Terlambat -->
                             <td class="py-5 px-6 text-center">
-                                @if($r->menit_terlambat > 0)
-                                    @php
-                                        $jamTelat = floor($r->menit_terlambat / 60);
-                                        $menitTelat = $r->menit_terlambat % 60;
-                                        $teksTelat = '';
-                                        if($jamTelat > 0) $teksTelat .= $jamTelat . 'j ';
-                                        if($menitTelat > 0 || $jamTelat == 0) $teksTelat .= $menitTelat . 'm';
-                                    @endphp
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200 shadow-sm">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        {{ $teksTelat }}
-                                    </span>
+                                {{-- CEK DULU: Jika statusnya Hadir atau Terlambat --}}
+                                @if(in_array(strtolower($r->status), ['hadir', 'terlambat']))
+                                    @if($r->menit_terlambat > 0)
+                                        @php
+                                            $jamTelat = floor($r->menit_terlambat / 60);
+                                            $menitTelat = $r->menit_terlambat % 60;
+                                            $teksTelat = '';
+                                            if($jamTelat > 0) $teksTelat .= $jamTelat . 'j ';
+                                            if($menitTelat > 0 || $jamTelat == 0) $teksTelat .= $menitTelat . 'm';
+                                        @endphp
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200 shadow-sm">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            {{ $teksTelat }}
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs border border-emerald-100">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                            Tepat
+                                        </span>
+                                    @endif
+                                {{-- Jika statusnya Izin, Sakit, Cuti, atau Alpa --}}
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 font-bold text-xs border border-emerald-100">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                                        Tepat
-                                    </span>
+                                    <span class="text-gray-400 font-medium">-</span>
                                 @endif
                             </td>
 

@@ -28,7 +28,7 @@ class PegawaiController extends Controller
 
         // 2. Buat Query Dasar (Semua tampil KECUALI Administrator Utama / ID 1)
         $query = User::with(['shift', 'jabatan'])
-                     ->where('name', '!=', 'Administrator Utama')
+                     ->where('role', '!=', 'admin')
                      ->where('id', '!=', 1);
 
         // 3. Jika ada input pencarian, filter berdasarkan Nama ATAU ID Pegawai

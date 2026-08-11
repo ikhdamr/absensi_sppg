@@ -90,4 +90,20 @@ class ForgotPasswordController extends Controller
         // Kembalikan ke halaman login dengan pesan sukses
         return redirect('/login')->with('success', 'Password berhasil diubah! Silakan login dengan password baru Anda.');
     }
+
+    public function resendOtp(Request $request)
+{
+    $email = $request->email;
+    
+    // 1. Generate OTP baru (sesuaikan dengan fungsi generate OTP Anda sebelumnya)
+    $otp = rand(100000, 999999);
+    
+    // 2. Simpan ke Cache (seperti proses awal)
+    \Illuminate\Support\Facades\Cache::put('otp_' . $email, $otp, now()->addMinutes(15));
+    
+    // 3. Kirim Email (Gunakan Mail facade Anda)
+    // \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\OtpMail($otp));
+
+    return back()->with('success', 'Kode OTP baru telah dikirim ke email Anda!');
+}
 }

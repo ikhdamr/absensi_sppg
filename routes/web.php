@@ -129,6 +129,7 @@ Route::get('/lupa-password', [ForgotPasswordController::class, 'index'])->name('
 Route::post('/lupa-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
 Route::post('/lupa-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/lupa-password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/lupa-password/resend-otp', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'resendOtp'])->name('lupa-password.resend-otp');
 
 // Route Update Profil Admin
 Route::put('/admin/profile/update', [ProfileController::class, 'update']);

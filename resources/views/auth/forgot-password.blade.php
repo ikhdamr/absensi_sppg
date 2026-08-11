@@ -121,6 +121,18 @@
                             </button>
                         </form>
 
+                        <!-- KIRIM ULANG OTP -->
+                        <div class="mt-6 text-center flex items-center justify-center gap-1 text-sm text-gray-500">
+                            <span>Tidak menerima kode?</span>
+                            <form action="{{ route('lupa-password.resend-otp') }}" method="POST" class="inline m-0 p-0">
+                                @csrf
+                                <input type="hidden" name="email" value="{{ session('reset_email') }}">
+                                <button type="submit" class="text-[#1868D5] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer">
+                                    Kirim Ulang OTP
+                                </button>
+                            </form>
+                        </div>
+
                     <!-- ============================================== -->
                     <!-- TAHAP 1: FORM INPUT EMAIL -->
                     <!-- ============================================== -->
@@ -146,11 +158,6 @@
                         </form>
                     @endif
 
-                    <div class="text-center mt-6">
-                        <a href="{{ url('/login') }}" class="text-sm font-bold text-gray-400 hover:text-[#1868D5] transition-colors">
-                            &larr; Kembali ke halaman Login
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
