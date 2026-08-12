@@ -16,6 +16,8 @@ class DashboardController extends Controller
     {
         $currentYear = Carbon::now()->year;
         $selectedMonth = (int) $request->input('bulan', Carbon::now()->month);
+        $now = Carbon::now();
+        $todayStr = $now->format('Y-m-d'); // Tanggal hari ini untuk perbandingan
 
         $daftarBulan = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -25,12 +27,14 @@ class DashboardController extends Controller
 
         $namaBulanTerpilih = $daftarBulan[$selectedMonth];
 
+        // ==========================================
         // 1. LOGIKA GRAFIK BULANAN
-        $totalPegawai = User::where('role', 'pegawai')->count();
+        // ==========================================
+        $totalPegawai = \App\Models\User::where('role', 'pegawai')->count();
 
         $hariLiburBulanIni = [];
         if (class_exists('\App\Models\HariLibur')) {
-            $hariLiburBulanIni = HariLibur::whereMonth('tanggal', $selectedMonth)
+            $hariLiburBulanIni = \App\Models\HariLibur::whereMonth('tanggal', $selectedMonth)
                                           ->whereYear('tanggal', $currentYear)
                                           ->pluck('tanggal')
                                           ->toArray();
@@ -40,7 +44,7 @@ class DashboardController extends Controller
             return Carbon::parse($tgl)->format('Y-m-d');
         }, $hariLiburBulanIni);
 
-        $presensiBulanIni = Presensi::whereMonth('tanggal', $selectedMonth)
+        $presensiBulanIni = \App\Models\Presensi::whereMonth('tanggal', $selectedMonth)
                                     ->whereYear('tanggal', $currentYear)
                                     ->get();
 
@@ -63,6 +67,7 @@ class DashboardController extends Controller
             $isMinggu = $dateCarbon->isSunday();
             $isLibur = in_array($dateStr, $liburFormatted);
 
+            // Jika hari Minggu atau Libur Nasional, kosongkan semua
             if ($isMinggu || $isLibur) {
                 $chartHadir[] = 0;
                 $chartIzin[]  = 0;
@@ -70,12 +75,24 @@ class DashboardController extends Controller
             } else {
                 $dailyData = $presensiBulanIni->where('tanggal', $dateStr);
 
-                // PERBAIKAN: Hitung 'Hadir', 'hadir', 'Terlambat', 'terlambat'
                 $hadir = $dailyData->whereIn('status', ['Hadir', 'hadir', 'Terlambat', 'terlambat'])->count();
-                // PERBAIKAN: Hitung huruf besar/kecil untuk Izin/Sakit/Cuti
                 $izin = $dailyData->whereIn('status', ['Izin', 'izin', 'Sakit', 'sakit', 'Cuti', 'cuti'])->count();
+                
+                $alpa = 0; // Default alpa adalah 0
 
-                $alpa = $totalPegawai - ($hadir + $izin);
+                // LOGIKA BARU: Cek apakah hari sudah lewat
+                if ($dateStr < $todayStr) {
+                    // Jika hari kemarin dan seterusnya (masa lalu), sisa pegawai yang tidak hadir/izin dianggap Alpa
+                    $alpa = $totalPegawai - ($hadir + $izin);
+                } elseif ($dateStr == $todayStr) {
+                    // Jika hari ini, tunggu sampai shift selesai (sementara set 0 agar grafik rapi saat jam kerja berjalan)
+                    // Jika ingin ketat, Anda bisa memanggil logika shift aktif di sini
+                    $alpa = 0; 
+                } else {
+                    // Jika besok dan masa depan, alpa = 0 (belum terjadi)
+                    $alpa = 0;
+                }
+
                 if ($alpa < 0) $alpa = 0;
 
                 $chartHadir[] = $hadir;
@@ -91,8 +108,6 @@ class DashboardController extends Controller
         // ==========================================
         // 2. LOGIKA REAL-TIME CARD HARI INI
         // ==========================================
-        $now = Carbon::now();
-        $today = $now->format('Y-m-d');
         $currentTime = $now->toTimeString();
 
         $namaJamKerja = 'Tidak ada jam kerja';
@@ -101,10 +116,10 @@ class DashboardController extends Controller
         $izinCutiSakitCount = 0;
 
         try {
-            $isHariIniLibur = in_array($today, $liburFormatted);
+            $isHariIniLibur = in_array($todayStr, $liburFormatted);
 
             if ($isHariIniLibur) {
-                $dataLibur = HariLibur::whereDate('tanggal', $today)->first();
+                $dataLibur = \App\Models\HariLibur::whereDate('tanggal', $todayStr)->first();
                 $namaJamKerja = $dataLibur ? $dataLibur->nama_keterangan : 'Hari Libur';
             } else {
                 if (class_exists('\App\Models\Shift')) {
@@ -126,17 +141,15 @@ class DashboardController extends Controller
                         $namaJamKerja = $shiftAktif->nama_shift . " ({$jamMasukFormat} - {$jamPulangFormat})";
 
                         // 1. Ambil ID semua pegawai yang ditugaskan KHUSUS di shift ini
-                        $userIdsDiShiftIni = User::where('role', 'pegawai')->where('shift_id', $shiftAktif->id)->pluck('id')->toArray();
+                        $userIdsDiShiftIni = \App\Models\User::where('role', 'pegawai')->where('shift_id', $shiftAktif->id)->pluck('id')->toArray();
                         $totalPegawaiShiftIni = count($userIdsDiShiftIni);
 
                         // 2. Filter Presensi HARI INI hanya untuk pegawai di shift ini
-                        $presensiShiftIni = Presensi::whereDate('tanggal', $today)
+                        $presensiShiftIni = \App\Models\Presensi::whereDate('tanggal', $todayStr)
                                                     ->whereIn('user_id', $userIdsDiShiftIni)
                                                     ->get();
 
-                        // PERBAIKAN: Hitung 'Hadir', 'hadir', 'Terlambat', 'terlambat'
                         $hadirCount = $presensiShiftIni->whereIn('status', ['Hadir', 'hadir', 'Terlambat', 'terlambat'])->count();
-                        // PERBAIKAN: Hitung huruf besar/kecil untuk Izin/Sakit/Cuti
                         $izinCutiSakitCount = $presensiShiftIni->whereIn('status', ['Izin', 'izin', 'Sakit', 'sakit', 'Cuti', 'cuti'])->count();
 
                         // 3. Logika Alpa (Delay 3 Jam)

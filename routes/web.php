@@ -2,10 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Import Controller Auth
+// ==========================================
+// IMPORT CONTROLLERS
+// ==========================================
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
-// Import Controller Admin (Namespace: App\Http\Controllers\Admin)
+// Admin Controllers
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
 use App\Http\Controllers\Admin\JabatanController;
@@ -13,10 +16,12 @@ use App\Http\Controllers\Admin\ShiftController;
 use App\Http\Controllers\Admin\HariLiburController;
 use App\Http\Controllers\Admin\PresensiController as AdminPresensiController;
 use App\Http\Controllers\Admin\KetidakhadiranController as AdminKetidakhadiranController;
-use App\Http\Controllers\Pegawai\DashboardController as PegawaiDashboardController;
-use App\Http\Controllers\Pegawai\KetidakhadiranController as PegawaiKetidakhadiranController; // <-- TAMBAHKAN INI
-use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\ProfileController;
+
+// Pegawai Controllers
+use App\Http\Controllers\Pegawai\DashboardController as PegawaiDashboardController;
+use App\Http\Controllers\Pegawai\KetidakhadiranController as PegawaiKetidakhadiranController; 
+
 
 /*
 |--------------------------------------------------------------------------
@@ -45,7 +50,7 @@ Route::get('/presensi/api/check-token/{token}', [AdminPresensiController::class,
 
 /*
 |--------------------------------------------------------------------------
-| 3. RUTE KHUSUS ROLE ADMIN (MEMBUTEUHKAN LOGIN)
+| 3. RUTE KHUSUS ROLE ADMIN (MEMBUTUHKAN LOGIN)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
@@ -58,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/pegawai', [AdminPegawaiController::class, 'store'])->name('pegawai.store');
     Route::put('/admin/pegawai/{id}', [AdminPegawaiController::class, 'update'])->name('pegawai.update');
     Route::delete('/admin/pegawai/{id}', [AdminPegawaiController::class, 'destroy'])->name('pegawai.destroy');
+    Route::put('/admin/pegawai/{id}/reset-password', [AdminPegawaiController::class, 'resetPassword'])->name('admin.pegawai.reset-password');
 
     // Data Master - Jabatan
     Route::get('/admin/master/jabatan', [JabatanController::class, 'index'])->name('jabatan.index');
@@ -83,12 +89,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/rekap-presensi/bulanan', [AdminPresensiController::class, 'bulanan'])->name('presensi.bulanan');
     Route::get('/admin/rekap-presensi/harian/pdf', [AdminPresensiController::class, 'exportPdfHarian'])->name('rekap.harian.pdf');
     Route::get('/admin/rekap-presensi/bulanan/pdf', [AdminPresensiController::class, 'exportPdfBulanan'])->name('rekap.bulanan.pdf');
+    
     // Kelola Ketidakhadiran Admin
     Route::get('/admin/ketidakhadiran', [AdminKetidakhadiranController::class, 'index'])->name('admin.ketidakhadiran.index');
     Route::put('/admin/ketidakhadiran/{id}/status', [AdminKetidakhadiranController::class, 'updateStatus'])->name('admin.ketidakhadiran.status');
+    
     // Fitur Presensi Manual Admin
-Route::get('/admin/presensi/manual', [App\Http\Controllers\Admin\PresensiController::class, 'createManual'])->name('admin.presensi.manual');
-Route::post('/admin/presensi/manual', [App\Http\Controllers\Admin\PresensiController::class, 'storeManual'])->name('admin.presensi.manual.store');
+    Route::get('/admin/presensi/manual', [AdminPresensiController::class, 'createManual'])->name('admin.presensi.manual');
+    Route::post('/admin/presensi/manual', [AdminPresensiController::class, 'storeManual'])->name('admin.presensi.manual.store');
+
+    // Profil & Ubah Password Admin (Diperbaiki & Dirapikan)
+    Route::put('/admin/profile/update', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::put('/admin/ubah-password', [ProfileController::class, 'updatePassword'])->name('admin.password.update');
 });
 
 
@@ -98,9 +110,6 @@ Route::post('/admin/presensi/manual', [App\Http\Controllers\Admin\PresensiContro
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-
-    // Scan QR oleh HP Pegawai
-    Route::get('/pegawai/scan-qr/{token}', [AdminPresensiController::class, 'scanQrCode']);
 
     // Kelompok Rute Halaman Pegawai
     Route::prefix('pegawai')->name('pegawai.')->group(function () {
@@ -117,21 +126,21 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Rute untuk menampilkan halaman kamera scanner
-Route::get('/pegawai/scan', [App\Http\Controllers\Admin\PresensiController::class, 'scanner'])->name('pegawai.scan');
+    Route::get('/pegawai/scan', [AdminPresensiController::class, 'scanner'])->name('pegawai.scan');
 
-// Rute untuk memproses hasil scan dari QR Code
-Route::get('/pegawai/scan-qr/{token}', [App\Http\Controllers\Admin\PresensiController::class, 'scanQrCode'])->name('pegawai.scan.process');
+    // Rute untuk memproses hasil scan dari QR Code (Disatukan agar tidak dobel)
+    Route::get('/pegawai/scan-qr/{token}', [AdminPresensiController::class, 'scanQrCode'])->name('pegawai.scan.process');
 
 });
 
-// Rute Lupa Password
+
+/*
+|--------------------------------------------------------------------------
+| 5. RUTE LUPA PASSWORD (OTP)
+|--------------------------------------------------------------------------
+*/
 Route::get('/lupa-password', [ForgotPasswordController::class, 'index'])->name('lupa-password');
 Route::post('/lupa-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
 Route::post('/lupa-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/lupa-password/reset', [ForgotPasswordController::class, 'resetPassword']);
-Route::post('/lupa-password/resend-otp', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'resendOtp'])->name('lupa-password.resend-otp');
-
-// Route Update Profil Admin
-Route::put('/admin/profile/update', [ProfileController::class, 'update']);
-
-Route::put('/admin/pegawai/{id}/reset-password', [\App\Http\Controllers\Admin\PegawaiController::class, 'resetPassword']);
+Route::post('/lupa-password/resend-otp', [ForgotPasswordController::class, 'resendOtp'])->name('lupa-password.resend-otp');
